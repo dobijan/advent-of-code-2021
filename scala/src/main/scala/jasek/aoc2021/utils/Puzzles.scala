@@ -1,18 +1,21 @@
 package jasek.aoc2021.utils
 
+import cats.effect.{IO, Resource}
+
 import scala.io.{BufferedSource, Source}
-import scala.util.{Try, Using}
 
 object Puzzles:
-  def readLines(path: String): Try[Vector[String]] =
-    readAs(path) { source =>
-      source.getLines().toVector
+  def readLines(path: String): IO[Vector[String]] =
+    fileResource(path).use { source =>
+      IO(source.getLines().toVector)
     }
 
-  def read(path: String): Try[String] =
-    readAs(path) { source =>
-      source.mkString
+  def read(path: String): IO[String] =
+    fileResource(path).use { source =>
+      IO(source.mkString)
     }
 
-  private def readAs[RESULT](path: String)(creator: BufferedSource => RESULT): Try[RESULT] =
-    Using(Source.fromFile(path, "UTF-8"))(creator)
+  private def fileResource(path: String): Resource[IO, BufferedSource] =
+    Resource.make(IO(Source.fromFile(path, "UTF-8"))) { source =>
+      IO(source.close())
+    }

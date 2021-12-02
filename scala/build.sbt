@@ -5,8 +5,7 @@ lazy val aoc2021 = (project in file("."))
   .settings(
     name := "advent-of-code-2021",
     libraryDependencies ++= List(
-      "org.scalatest" %% "scalatest" % "3.2.9" % Test,
-      "org.typelevel" %% "cats-core" % "2.7.0",
+      "org.typelevel" %% "cats-effect" % "3.3.0",
       "com.outr" %% "scribe" % "3.6.3"
     )
   )

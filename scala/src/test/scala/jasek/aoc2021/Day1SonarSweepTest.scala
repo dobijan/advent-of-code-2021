@@ -1,10 +1,10 @@
 package jasek.aoc2021
 
-import org.scalatest.flatspec.AnyFlatSpec
+import cats.effect.{IO, IOApp}
 
-class Day1SonarSweepTest extends AnyFlatSpec :
+object Day1SonarSweepTest extends IOApp.Simple :
 
-  it should "count the number of occurrences of increasing depth" in {
-    val occurrences = Day1SonarSweep.increases("src/main/resources/day1/input")
-    scribe.info(s"Depth has increased $occurrences times.")
-  }
+  val run: IO[Unit] =
+    for {
+      occurrences <- Day1SonarSweep.increases("src/main/resources/day1/input")
+    } yield scribe.info(s"Depth has increased $occurrences times.")
