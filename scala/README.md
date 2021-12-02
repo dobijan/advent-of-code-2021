@@ -19,7 +19,6 @@ To run it from the command line:
 [info] loading project definition from /home/jasek/Documents/code/advent-of-code-2021/scala/project
 [info] loading settings for project aoc2021 from build.sbt ...
 [info] set current project to advent-of-code-2021 (in build file:/home/jasek/Documents/code/advent-of-code-2021/scala/)
-[warn] sbt 0.13 shell syntax is deprecated; use slash syntax instead: Test / runMain
 [info] running jasek.aoc2021.Day1SonarSweepTest 
 2021.12.02 14:48:31:000 [io-comp...] [INFO ] jasek.aoc2021.Day1SonarSweepTest.run:19 - 
 With a 1-wide measurement window depth has increased 1665 times.
