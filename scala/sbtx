@@ -656,7 +656,7 @@ fi
 # traceLevel is 0.12+
 [[ -n "$trace_level" ]] && setTraceLevel
 
-execRunner "$java_cmd" \
+execRunner "$java_cmd" \https://github.com/dobijan/advent-of-code-2021
   "${extra_jvm_opts[@]}" \
   "${java_args[@]}" \
   -jar "$sbt_jar" \

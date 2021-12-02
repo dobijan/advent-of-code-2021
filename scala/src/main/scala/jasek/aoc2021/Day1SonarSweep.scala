@@ -30,9 +30,8 @@ object Day1SonarSweep:
       .filter(_.isDefined)
       .flatten
 
-  private def countIncreases(depths: Vector[Int]) = {
+  private def countIncreases(depths: Vector[Int]) =
     depths
       .dropRight(1)
       .zip(depths.drop(1))
       .count { case (prev, next) => prev < next }
-  }
