@@ -10,5 +10,10 @@ object Day2DiveTest extends IOApp.Simple with InputPath :
   override def run: IO[Unit] =
     for {
       terminalPosition <- Day2Dive.terminalPosition(inputPath)
-    } yield scribe.info(s"The terminal position is $terminalPosition. Product: ${terminalPosition.product}")
+      terminalPositionByAim <- Day2Dive.terminalPositionByAim(inputPath)
+    } yield scribe.info(
+      s"""
+         |The terminal position by cartesian movement is $terminalPosition. Product: ${terminalPosition.product}
+         |The terminal position by polar movement is $terminalPositionByAim. Product: ${terminalPositionByAim.product}
+         |""".stripMargin)
 
