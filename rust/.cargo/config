@@ -1,0 +1,2 @@
+[alias]
+puzzle = "test -- --nocapture --color always"

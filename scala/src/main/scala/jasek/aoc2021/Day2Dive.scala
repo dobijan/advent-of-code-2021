@@ -100,11 +100,10 @@ object Day2Dive:
   def terminalPositionByAim(path: String): IO[Position] =
     withCreators(path, Command.aimAwareCreators)
 
-  private def withCreators(path: String, creators: Seq[FromName]) = {
+  private def withCreators(path: String, creators: Seq[FromName]): IO[Position] =
     for {
       puzzle <- Puzzles.readLines(path)
       position = puzzle
         .flatMap(Command(_, creators))
         .foldLeft(Position())(_ (_))
     } yield position
-  }
