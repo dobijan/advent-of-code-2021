@@ -1,69 +1,128 @@
 package jasek.aoc2021
 
 import cats.effect.IO
-import jasek.aoc2021.Day3BinaryDiagnostic.B
 import jasek.aoc2021.utils.Puzzles
 
+import scala.annotation.tailrec
 import scala.collection.immutable.BitSet
 
 object Day3BinaryDiagnostic:
 
-  type B = (Int, Int)
+  object Report:
+    def apply(path: String): IO[Report] =
+      for {
+        puzzle <- Puzzles.readLines(path)
+        bitCount = puzzle(0).trim.length
+        report = puzzle.foldLeft(Report(bitCount))(_ (_))
+      } yield report
 
-  type Bits = (B, B, B, B, B, B, B, B, B, B, B, B)
-
-  case class Report(bits: Bits = ((0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0))) {
+  case class Report(bitCount: Int, numbers: Seq[Long] = Seq()):
     def apply(line: String): Report =
-      Report(
-        bits = (line.strip(): Seq[Char]) match {
-          case Seq(a, b, c, d, e, f, g, h, i, j, k, l) => bits match {
-            case (a1, b1, c1, d1, e1, f1, g1, h1, i1, j1, k1, l1) => (
-              update(a1, a),
-              update(b1, b),
-              update(c1, c),
-              update(d1, d),
-              update(e1, e),
-              update(f1, f),
-              update(g1, g),
-              update(h1, h),
-              update(i1, i),
-              update(j1, j),
-              update(k1, k),
-              update(l1, l)
-            )
-          }
-        }
-      )
+      this.copy(numbers = numbers :+ line.strip().dropWhile(_.equals('0')).toLong)
 
-    def gammaRate(): Int =
-      val mostCommonBits = mcb()
-      (0 to 11).filter(mostCommonBits.contains).map(idxToValue).sum
+    // Task 1
+    def powerConsumption(): Int =
+      val mcb = BitStats(this.numbers).toBitSet
+      gammaRate(mcb) * epsilonRate(mcb)
 
-    def epsilonRate(): Int =
-      val mostCommonBits = mcb()
-      (0 to 11).filter(!mostCommonBits.contains(_)).map(idxToValue).sum
+    private def gammaRate(mcb: BitSet): Int =
+      (0 until bitCount).filter(mcb.contains).map(idx => idxToValue(bitCount - 1 - idx)).sum
+
+    private def epsilonRate(mcb: BitSet): Int =
+      (0 until bitCount).filter(!mcb.contains(_)).map(idx => idxToValue(bitCount - 1 - idx)).sum
 
     private def idxToValue(idx: Int): Int =
-      Math.pow(2, 11 - idx).toInt
+      Math.pow(2, idx).toInt
 
-    private def mcb(): BitSet =
-      bits.productIterator
-        .zipWithIndex
-        .flatMap { case (b, idx) => if isOne(b.asInstanceOf[B]) then Some(idx) else None }
-        .foldLeft(BitSet())(_.incl(_))
+    // Task 2
+    def lifeSupportRating(): Long =
+      oxygenGeneratorRating * co2ScrubberRating
 
-    private def isOne(pos: B): Boolean =
-      pos match {
-        case (zeros, ones) => zeros < ones
-      }
+    private def oxygenGeneratorRating: Long =
+      toBinary(
+        findNumber(criterion = (depth: Int, mostCommonBits: BitStats) => (number: Long) =>
+          criterion(
+            depth,
+            mostCommonBits,
+            number,
+            (depthInBitSet: Boolean, digit: Long) => depthInBitSet && digit != 0 || !depthInBitSet && digit == 0
+          )
+        )
+      )
 
-    private def update(pos: B, c: Char): B = pos match {
-      case (zeros, ones) => if c.equals('0') then (zeros + 1, ones) else (zeros, ones + 1)
-    }
-  }
+    private def co2ScrubberRating: Long =
+      toBinary(
+        findNumber(criterion = (depth: Int, mostCommonBits: BitStats) => (number: Long) =>
+          criterion(
+            depth,
+            mostCommonBits,
+            number,
+            (depthInBitSet: Boolean, digit: Long) => depthInBitSet && digit == 0 || !depthInBitSet && digit != 0
+          )
+        )
+      )
 
-  def consumption(path: String): IO[Int] =
-    for {
-      puzzle <- Puzzles.readLines(path)
-      report = puzzle.foldLeft(Report())(_ (_))
-    } yield report.gammaRate() * report.epsilonRate()
+    private def criterion(
+      depth: Int,
+      mostCommonBits: BitStats,
+      number: Long,
+      comparator: (depthInBitSet: Boolean, digit: Long) => Boolean
+    ): Boolean = comparator(
+      depthInBitSet = mostCommonBits.toBitSet.contains(depth),
+      digit = (number / Math.pow(10, bitCount - 1 - depth).toLong) % 10
+    )
+
+    /**
+     * Recursively filters the list of numbers until one remains.
+     * It takes:
+     *  - the numbers to filter
+     *  - the current depth which signals which digit to examine
+     *  - and the criterion to filter by.
+     *
+     * The criterion takes a depth and a bit stats and returns a lambda that can filter the numbers for that depth and bits stats
+     */
+    @tailrec
+    private def findNumber(
+      numbers: Seq[Long] = this.numbers,
+      depth: Int = 0,
+      criterion: (Int, BitStats) => Long => Boolean
+    ): Long =
+      if numbers.size < 2
+      then numbers.head
+      else findNumber(
+        numbers = numbers.filter(criterion(depth, BitStats(numbers))),
+        depth = depth + 1,
+        criterion = criterion
+      )
+
+    private def toBinary(decimal: Long): Long =
+      (0 until bitCount)
+        .flatMap(idx => if ((decimal / Math.pow(10, idx).toLong) % 10) != 0 then Some(idxToValue(idx)) else None)
+        .sum
+
+    case class BitStats(bitCount: Int, bits: Vector[(Int, Int)] = Vector.fill(bitCount)((0, 0))):
+      // set that contains indices at which '1' is the more common bit
+      def toBitSet: BitSet =
+        bits
+          .zipWithIndex
+          .filter { case ((zeros, ones), _) => zeros <= ones }
+          .map { case (_, idx) => idx }
+          .foldLeft(BitSet())(_.incl(_))
+
+    object BitStats:
+      /**
+       * Calculates the set of indices at which '1' is the more common bit, for a set of numbers.
+       */
+      def apply(numbers: Seq[Long]): BitStats =
+        numbers
+          .map(n => (0 until bitCount).map(idx => (n / Math.pow(10, bitCount - 1 - idx).toLong) % 10))
+          .foldLeft(BitStats(bitCount)) { (acc, digits) =>
+            digits
+              .zipWithIndex
+              .foldLeft(acc) { case (bitStats, (digit, idx)) =>
+                val statsAtIdx@(zeros, ones) = bitStats.bits(idx)
+                if digit == 0
+                then bitStats.copy(bits = bitStats.bits.updated(idx, statsAtIdx.copy(_1 = zeros + 1)))
+                else bitStats.copy(bits = bitStats.bits.updated(idx, statsAtIdx.copy(_2 = ones + 1)))
+              }
+          }

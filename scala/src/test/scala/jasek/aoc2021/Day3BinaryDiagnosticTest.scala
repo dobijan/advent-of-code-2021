@@ -9,8 +9,9 @@ object Day3BinaryDiagnosticTest extends IOApp.Simple with InputPath :
 
   override def run: IO[Unit] =
     for {
-      consumption <- Day3BinaryDiagnostic.consumption(inputPath)
+      report <- Day3BinaryDiagnostic.Report(inputPath)
     } yield scribe.info(
       s"""
-         |The submarine's consumptions is $consumption
+         |The submarine's consumptions is ${report.powerConsumption()}
+         |The submarine's life support rating is ${report.lifeSupportRating()}
          |""".stripMargin)
