@@ -9,3 +9,11 @@ pub fn day3_task1() {
         super::solve(PATH)
     )
 }
+
+#[test]
+pub fn day3_task2() {
+    println!(
+        "[Day 3 Task 2] Submarine life support rating: {}",
+        super::solve_2(PATH)
+    )
+}
